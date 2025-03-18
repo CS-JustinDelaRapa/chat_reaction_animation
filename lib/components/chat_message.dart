@@ -2,6 +2,7 @@
 
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'emoji_reaction_container.dart';
 
 class ChatMessage extends StatefulWidget {
   final String message;
@@ -18,8 +19,11 @@ class ChatMessage extends StatefulWidget {
 }
 
 class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStateMixin {
+  final GlobalKey<EmojiReactionContainerState> _emojiKey = GlobalKey<EmojiReactionContainerState>();
+  
   late AnimationController _controller;
   late Animation<Offset> _slideAnimation;
+  
   bool _isLongPressed = false;
   OverlayEntry? _overlayEntry;
 
@@ -40,6 +44,9 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
   }
 
   void _removeOverlay() async {
+    // First reverse the emoji container animation
+    await _emojiKey.currentState?.closeContainer(null);
+    // Then reverse the message animation and remove overlay
     await _controller.reverse();
     _overlayEntry?.remove();
     setState(() => _isLongPressed = false);
@@ -96,6 +103,21 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
                     ),
                   ),
                 ),
+              ),
+            ),
+            Positioned(
+              right: _slideAnimation.value.dx * screenSize.width,
+              top: (_slideAnimation.value.dy * screenSize.height)-(messageSize.height * 1.85),
+              child: EmojiReactionContainer(
+                key: _emojiKey,
+                onEmojiSelected: (emoji) {
+                  if (emoji == null) {
+                    _removeOverlay();
+                  } else {
+                    // Handle emoji selection here
+                    _removeOverlay();
+                  }
+                },
               ),
             ),
             // Animated message position
