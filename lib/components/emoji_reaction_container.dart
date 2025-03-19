@@ -118,7 +118,7 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: AnimatedScale(
               scale: isPressed ? 1.5 : 1.0,
-              duration: const Duration(milliseconds: 150),
+              duration: const Duration(milliseconds: 100),
               child: Image.asset(
                 emojiAsset,
                 width: 28,
