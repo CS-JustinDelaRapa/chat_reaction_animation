@@ -19,7 +19,15 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
   late Animation<double> _fadeAnimation;
   bool _isClosing = false;
 
-  final List<String> _emojis = const ['❤️', '😂', '😮', '😢', '😡', '👍'];
+  final List<String> _emojiAssets = const [
+    'assets/emojis/emoji_1.png',
+    'assets/emojis/emoji_2.png',
+    'assets/emojis/emoji_3.png',
+    'assets/emojis/emoji_4.png',
+    'assets/emojis/emoji_5.png',
+    'assets/emojis/emoji_6.png',
+    'assets/emojis/emoji_7.png',
+  ];
 
   @override
   void initState() {
@@ -69,7 +77,7 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
       child: FadeTransition(
         opacity: _fadeAnimation,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
             color: const Color(0xFF252942),
             borderRadius: BorderRadius.circular(24),
@@ -83,23 +91,46 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
-            children: _emojis.map((emoji) {
-              return _buildEmojiButton(emoji);
-            }).toList(),
+            children: [
+              ...(_emojiAssets)
+                  .map((emoji) => _buildEmojiButton(emoji))
+                  .toList(),
+              const SizedBox(width: 4),
+              _buildExpandButton(),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildEmojiButton(String emoji) {
+  Widget _buildEmojiButton(String emojiAsset) {
     return GestureDetector(
-      onTap: () => closeContainer(emoji),
+      onTap: () => closeContainer(emojiAsset),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Text(
-          emoji,
-          style: const TextStyle(fontSize: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 4),
+        child: Image.asset(
+          emojiAsset,
+          width: 28,
+          height: 28,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExpandButton() {
+    return GestureDetector(
+      onTap: (){},
+      child: Container(
+        padding: const EdgeInsets.all(4),
+        decoration: BoxDecoration(
+          color: const Color(0xFF424660),
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: const Icon(
+          Icons.expand_more,
+          color: Colors.white,
+          size: 28,
         ),
       ),
     );

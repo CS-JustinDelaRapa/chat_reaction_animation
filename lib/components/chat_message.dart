@@ -110,16 +110,11 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
               ),
               Positioned(
                 right: _slideAnimation.value.dx * _cachedScreenSize!.width,
-                top: (_slideAnimation.value.dy * _cachedScreenSize!.height)-(_cachedMessageSize!.height * 1.85),
+                top: (_slideAnimation.value.dy * _cachedScreenSize!.height)-(_cachedMessageSize!.height * 2),
                 child: EmojiReactionContainer(
                   key: _emojiKey,
                   onEmojiSelected: (emoji) {
-                    if (emoji == null) {
-                      _removeOverlay();
-                    } else {
-                      // Handle emoji selection here
-                      _removeOverlay();
-                    }
+                    _removeOverlay();
                   },
                 ),
               ),
