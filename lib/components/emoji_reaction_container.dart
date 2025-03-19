@@ -19,7 +19,7 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
   late Animation<double> _fadeAnimation;
   bool _isClosing = false;
 
-  final List<String> _emojis = ['❤️', '😂', '😮', '😢', '😡', '👍'];
+  final List<String> _emojis = const ['❤️', '😂', '😮', '😢', '😡', '👍'];
 
   @override
   void initState() {
@@ -73,9 +73,9 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
           decoration: BoxDecoration(
             color: const Color(0xFF252942),
             borderRadius: BorderRadius.circular(24),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black12,
                 blurRadius: 10,
                 spreadRadius: 1,
               ),
@@ -93,9 +93,9 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
   }
 
   Widget _buildEmojiButton(String emoji) {
-    return InkWell(
+    return GestureDetector(
       onTap: () => closeContainer(emoji),
-      child: Container(
+      child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
         child: Text(
           emoji,

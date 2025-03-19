@@ -21,11 +21,13 @@ class ChatMessage extends StatefulWidget {
 class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStateMixin {
   final GlobalKey<EmojiReactionContainerState> _emojiKey = GlobalKey<EmojiReactionContainerState>();
   
-  late AnimationController _controller;
+  late final AnimationController _controller;
   late Animation<Offset> _slideAnimation;
   
   bool _isLongPressed = false;
   OverlayEntry? _overlayEntry;
+  Size? _cachedScreenSize;
+  Size? _cachedMessageSize;
 
   @override
   void initState() {
@@ -53,23 +55,23 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
   }
 
   void _showOverlay(BuildContext context, RenderBox box, Offset position) {
-    // Get screen dimensions for relative positioning
-    final screenSize = MediaQuery.of(context).size;
-    final messageSize = box.size;
+    // Cache screen and message sizes
+    _cachedScreenSize = MediaQuery.of(context).size;
+    _cachedMessageSize = box.size;
     
     // Calculate the initial position (where the user long-pressed)
     // Convert absolute coordinates to relative (0-1) for easier animation
     final startOffset = Offset(
-      position.dx / screenSize.width,
-      position.dy / screenSize.height,
+      position.dx / _cachedScreenSize!.width,
+      position.dy / _cachedScreenSize!.height,
     );
     
     // Calculate the final position for the overlay
     // Position the message on the right side of the screen (80% of screen width)
     // and vertically centered
     final endOffset = Offset(
-      position.dx / screenSize.width, // Right-aligned position
-      (screenSize.height - messageSize.height) / (2 * screenSize.height), // Vertical center
+      position.dx / _cachedScreenSize!.width,
+      (_cachedScreenSize!.height - _cachedMessageSize!.height) / (2 * _cachedScreenSize!.height),
     );
 
     // Create a sliding animation that moves the message
@@ -83,98 +85,99 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
     ));
 
     _overlayEntry = OverlayEntry(
-      builder: (context) => Material(
-        color: Colors.transparent,
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTapDown: (_) => _removeOverlay(),
-                child: AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) => BackdropFilter(
-                    filter: ImageFilter.blur(
-                      sigmaX: 5 * _controller.value,
-                      sigmaY: 5 * _controller.value,
-                    ),
-                    child: Container(
-                      color: Colors.black.withOpacity(0.5 * _controller.value),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              right: _slideAnimation.value.dx * screenSize.width,
-              top: (_slideAnimation.value.dy * screenSize.height)-(messageSize.height * 1.85),
-              child: EmojiReactionContainer(
-                key: _emojiKey,
-                onEmojiSelected: (emoji) {
-                  if (emoji == null) {
-                    _removeOverlay();
-                  } else {
-                    // Handle emoji selection here
-                    _removeOverlay();
-                  }
-                },
-              ),
-            ),
-            // Animated message position
-            AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Positioned(
-                  right: _slideAnimation.value.dx * screenSize.width,
-                  top: _slideAnimation.value.dy * screenSize.height,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    child: child
-                  ),
-                );
-              },
-              child: Container(
-                width: MediaQuery.of(context).size.width * 0.75,
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4A148C),
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(16),
-                    topRight: Radius.circular(16),
-                    bottomLeft: Radius.circular(16),
-                    bottomRight: Radius.circular(0),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      widget.message,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+      builder: (context) => RepaintBoundary(
+        child: Material(
+          color: Colors.transparent,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTapDown: (_) => _removeOverlay(),
+                  child: AnimatedBuilder(
+                    animation: _controller,
+                    builder: (context, child) => BackdropFilter(
+                      filter: ImageFilter.blur(
+                        sigmaX: 5 * _controller.value,
+                        sigmaY: 5 * _controller.value,
+                      ),
+                      child: Container(
+                        color: Colors.black.withOpacity(0.5 * _controller.value),
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.time,
-                      style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
-            ),
-          ],
+              Positioned(
+                right: _slideAnimation.value.dx * _cachedScreenSize!.width,
+                top: (_slideAnimation.value.dy * _cachedScreenSize!.height)-(_cachedMessageSize!.height * 1.85),
+                child: EmojiReactionContainer(
+                  key: _emojiKey,
+                  onEmojiSelected: (emoji) {
+                    if (emoji == null) {
+                      _removeOverlay();
+                    } else {
+                      // Handle emoji selection here
+                      _removeOverlay();
+                    }
+                  },
+                ),
+              ),
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) => Positioned(
+                  right: _slideAnimation.value.dx * _cachedScreenSize!.width,
+                  top: _slideAnimation.value.dy * _cachedScreenSize!.height,
+                  child: child!,
+                ),
+                child: _buildMessageContainer(context),
+              ),
+            ],
+          ),
         ),
       ),
     );
 
     Overlay.of(context).insert(_overlayEntry!);
     _controller.forward();
+  }
+
+  Widget _buildMessageContainer(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return Container(
+      width: size.width * 0.75,
+      padding: const EdgeInsets.all(8),
+      decoration: const BoxDecoration(
+        color: Color(0xFF4A148C),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+          bottomLeft: Radius.circular(16),
+          bottomRight: Radius.circular(0),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            widget.message,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 16,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            widget.time,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -192,40 +195,7 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
         opacity: _isLongPressed ? 0.0 : 1.0,
         child: Align(
           alignment: Alignment.centerRight,
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.75,
-            padding: const EdgeInsets.all(8),
-            decoration: const BoxDecoration(
-              color: Color(0xFF4A148C),
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-                bottomLeft: Radius.circular(16),
-                bottomRight: Radius.circular(0),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  widget.message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  widget.time,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
+          child: _buildMessageContainer(context),
         ),
       ),
     );
