@@ -105,22 +105,35 @@ class EmojiReactionContainerState extends State<EmojiReactionContainer>
   }
 
   Widget _buildEmojiButton(String emojiAsset) {
-    return GestureDetector(
-      onTap: () => closeContainer(emojiAsset),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Image.asset(
-          emojiAsset,
-          width: 28,
-          height: 28,
-        ),
-      ),
+    bool isPressed = false;
+
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return GestureDetector(
+          onTapDown: (_) => setState(() => isPressed = true),
+          onTapUp: (_) => setState(() => isPressed = false),
+          onTapCancel: () => setState(() => isPressed = false),
+          onTap: () => closeContainer(emojiAsset),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: AnimatedScale(
+              scale: isPressed ? 1.5 : 1.0,
+              duration: const Duration(milliseconds: 150),
+              child: Image.asset(
+                emojiAsset,
+                width: 28,
+                height: 28,
+              ),
+            ),
+          ),
+        );
+      }
     );
   }
 
   Widget _buildExpandButton() {
     return GestureDetector(
-      onTap: (){},
+      onTap: () {},
       child: Container(
         padding: const EdgeInsets.all(4),
         decoration: BoxDecoration(

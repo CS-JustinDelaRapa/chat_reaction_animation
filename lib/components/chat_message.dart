@@ -3,6 +3,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'emoji_reaction_container.dart';
+import 'action_menu_container.dart';
 
 class ChatMessage extends StatefulWidget {
   final String message;
@@ -20,6 +21,7 @@ class ChatMessage extends StatefulWidget {
 
 class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStateMixin {
   final GlobalKey<EmojiReactionContainerState> _emojiKey = GlobalKey<EmojiReactionContainerState>();
+  final GlobalKey<ActionMenuContainerState> _actionMenuKey = GlobalKey<ActionMenuContainerState>();
   
   late final AnimationController _controller;
   late Animation<Offset> _slideAnimation;
@@ -46,8 +48,15 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
   }
 
   void _removeOverlay() async {
-    // First reverse the emoji container animation
-    await _emojiKey.currentState?.closeContainer(null);
+    // First reverse the emoji container and action menu animations
+    final futures = [
+      _emojiKey.currentState?.closeContainer(null),
+      _actionMenuKey.currentState?.closeContainer(null),
+    ].whereType<Future<void>>().toList();
+    
+    if (futures.isNotEmpty) {
+      await Future.wait(futures);
+    }
     // Then reverse the message animation and remove overlay
     await _controller.reverse();
     _overlayEntry?.remove();
@@ -108,16 +117,31 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
                   ),
                 ),
               ),
+              // Emoji Container
               Positioned(
                 right: _slideAnimation.value.dx * _cachedScreenSize!.width,
-                top: (_slideAnimation.value.dy * _cachedScreenSize!.height)-(_cachedMessageSize!.height * 2),
+                top: (_slideAnimation.value.dy * _cachedScreenSize!.height) - (_cachedMessageSize!.height * 2),
                 child: EmojiReactionContainer(
                   key: _emojiKey,
                   onEmojiSelected: (emoji) {
                     _removeOverlay();
+                    // Handle emoji selection here
                   },
                 ),
               ),
+              // Action Menu Container
+              Positioned(
+                right: _slideAnimation.value.dx * _cachedScreenSize!.width,
+                top: (_slideAnimation.value.dy * _cachedScreenSize!.height) - (_cachedMessageSize!.height / 2.5),
+                child: ActionMenuContainer(
+                  key: _actionMenuKey,
+                  onActionSelected: (action) {
+                    _removeOverlay();
+                    // Handle action selection here
+                  },
+                ),
+              ),
+              // Message Container
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) => Positioned(
