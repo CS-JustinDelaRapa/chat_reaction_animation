@@ -72,7 +72,7 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
     // Convert absolute coordinates to relative (0-1) for easier animation
     final startOffset = Offset(
       position.dx / _cachedScreenSize!.width,
-      position.dy / _cachedScreenSize!.height,
+      (position.dy / _cachedScreenSize!.height) - 0.2,
     );
     
     // Calculate the final position for the overlay
@@ -80,7 +80,7 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
     // and vertically centered
     final endOffset = Offset(
       position.dx / _cachedScreenSize!.width,
-      (_cachedScreenSize!.height - _cachedMessageSize!.height) / (2 * _cachedScreenSize!.height),
+      (_cachedScreenSize!.height - _cachedMessageSize!.height) / (3 * _cachedScreenSize!.height),
     );
 
     // Create a sliding animation that moves the message
@@ -90,7 +90,7 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
       end: endOffset,
     ).animate(CurvedAnimation(
       parent: _controller,
-      curve: Curves.easeInToLinear,
+      curve: Curves.linear,
     ));
 
     _overlayEntry = OverlayEntry(
@@ -117,31 +117,6 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
                   ),
                 ),
               ),
-              // Emoji Container
-              Positioned(
-                right: _slideAnimation.value.dx * _cachedScreenSize!.width,
-                top: (_slideAnimation.value.dy * _cachedScreenSize!.height) - (_cachedMessageSize!.height * 2),
-                child: EmojiReactionContainer(
-                  key: _emojiKey,
-                  onEmojiSelected: (emoji) {
-                    _removeOverlay();
-                    // Handle emoji selection here
-                  },
-                ),
-              ),
-              // Action Menu Container
-              Positioned(
-                right: _slideAnimation.value.dx * _cachedScreenSize!.width,
-                top: (_slideAnimation.value.dy * _cachedScreenSize!.height) - (_cachedMessageSize!.height / 2.5),
-                child: ActionMenuContainer(
-                  key: _actionMenuKey,
-                  onActionSelected: (action) {
-                    _removeOverlay();
-                    // Handle action selection here
-                  },
-                ),
-              ),
-              // Message Container
               AnimatedBuilder(
                 animation: _controller,
                 builder: (context, child) => Positioned(
@@ -149,7 +124,26 @@ class _ChatMessageState extends State<ChatMessage> with SingleTickerProviderStat
                   top: _slideAnimation.value.dy * _cachedScreenSize!.height,
                   child: child!,
                 ),
-                child: _buildMessageContainer(context),
+                child: Column(
+                  spacing: 16,
+                  children: [
+                    EmojiReactionContainer(
+                      key: _emojiKey,
+                      onEmojiSelected: (emoji) {
+                        _removeOverlay();
+                        // Handle emoji selection here
+                      },
+                    ),
+                    _buildMessageContainer(context),
+                    ActionMenuContainer(
+                      key: _actionMenuKey,
+                      onActionSelected: (action) {
+                        _removeOverlay();
+                        // Handle action selection here
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
